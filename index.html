@@ -45,7 +45,6 @@
         let currentProblem = { q: '', a: 0, d: 0, correctGap: '' };
         let pipeSpeed = -220, spawnTimer, scoreText, questionText, menuText, highScoreText;
 
-        // Fetch high score from local storage (defaults to 0 if not found)
         let highScore = localStorage.getItem('mathGapHighScore') || 0;
 
         function preload() {
@@ -80,8 +79,6 @@
             }).setOrigin(0.5).setDepth(20);
 
             scoreText = this.add.text(200, 110, 'Score: 0', { fontSize: '22px', fill: '#fff', fontWeight: 'bold' }).setOrigin(0.5).setDepth(20);
-            
-            // New High Score display element
             highScoreText = this.add.text(200, 140, `Best: ${highScore}`, { fontSize: '18px', fill: '#FFD700', fontWeight: 'bold' }).setOrigin(0.5).setDepth(20);
 
             menuText = this.add.text(200, 300, '', { 
@@ -155,13 +152,25 @@
         }
 
         function generateMathProblem() {
-            const isMultiplication = Math.random() > 0.5;
+            const types = ['add', 'sub', 'mul', 'div'];
+            const mode = Phaser.Utils.Array.GetRandom(types);
             
-            if (isMultiplication) {
+            if (mode === 'mul') {
                 let a = Phaser.Math.Between(2, 10);
                 let b = Phaser.Math.Between(2, 5);
                 currentProblem.q = `${a} × ${b} = ?`;
                 currentProblem.a = a * b;
+            } else if (mode === 'sub') {
+                let a = Phaser.Math.Between(10, 30);
+                let b = Phaser.Math.Between(1, a); // Ensures no negative results
+                currentProblem.q = `${a} - ${b} = ?`;
+                currentProblem.a = a - b;
+            } else if (mode === 'div') {
+                let b = Phaser.Math.Between(2, 5);
+                let answer = Phaser.Math.Between(1, 10);
+                let a = b * answer; // Guarantees a whole number result
+                currentProblem.q = `${a} ÷ ${b} = ?`;
+                currentProblem.a = answer;
             } else {
                 let a = Phaser.Math.Between(1, 20);
                 let b = Phaser.Math.Between(1, 20);
@@ -170,7 +179,8 @@
             }
 
             let distractor = currentProblem.a + Phaser.Math.RND.pick([-3, -2, -1, 1, 2, 3]);
-            if (distractor < 0) distractor = currentProblem.a + 4;
+            if (distractor < 0) distractor = Math.abs(distractor) + 1;
+            if (distractor === currentProblem.a) distractor++;
             
             currentProblem.d = distractor;
             currentProblem.correctGap = Math.random() > 0.5 ? 'top' : 'bottom';
@@ -233,7 +243,6 @@
             this.physics.pause();
             player.setTint(0xff0000);
             
-            // Handle High Score Logic
             let newRecord = false;
             if (score > highScore) {
                 highScore = score;
