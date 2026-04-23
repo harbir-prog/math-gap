@@ -43,8 +43,13 @@
         const game = new Phaser.Game(config);
         let player, pipes, score = 0, gameState = 'BOOT'; 
         let currentProblem = { q: '', a: 0, d: 0, correctGap: '' };
-        let pipeSpeed = -220, spawnTimer, scoreText, questionText, menuText, highScoreText;
-
+        
+        // Speed Variables
+        let basePipeSpeed = -160; // Slower start
+        let currentPipeSpeed = -160;
+        let speedIncrement = -5;  // Speed up by 5 per point
+        
+        let spawnTimer, scoreText, questionText, menuText, highScoreText;
         let highScore = localStorage.getItem('mathGapHighScore') || 0;
 
         function preload() {
@@ -73,16 +78,17 @@
             player.visible = false;
             player.setDepth(10);
 
-            questionText = this.add.text(200, 60, '', { 
-                fontSize: '32px', fill: '#fff', stroke: '#000', strokeThickness: 5,
-                wordWrap: { width: 380 }, align: 'center' 
+            // Enlarged Question Text
+            questionText = this.add.text(200, 65, '', { 
+                fontSize: '42px', fill: '#fff', stroke: '#000', strokeThickness: 8,
+                wordWrap: { width: 380 }, align: 'center', fontWeight: 'bold'
             }).setOrigin(0.5).setDepth(20);
 
-            scoreText = this.add.text(200, 110, 'Score: 0', { fontSize: '22px', fill: '#fff', fontWeight: 'bold' }).setOrigin(0.5).setDepth(20);
-            highScoreText = this.add.text(200, 140, `Best: ${highScore}`, { fontSize: '18px', fill: '#FFD700', fontWeight: 'bold' }).setOrigin(0.5).setDepth(20);
+            scoreText = this.add.text(200, 120, 'Score: 0', { fontSize: '24px', fill: '#fff', fontWeight: 'bold' }).setOrigin(0.5).setDepth(20);
+            highScoreText = this.add.text(200, 150, `Best: ${highScore}`, { fontSize: '20px', fill: '#FFD700', fontWeight: 'bold' }).setOrigin(0.5).setDepth(20);
 
             menuText = this.add.text(200, 300, '', { 
-                fontSize: '24px', fill: '#fff', align: 'center', stroke: '#000', strokeThickness: 4,
+                fontSize: '26px', fill: '#fff', align: 'center', stroke: '#000', strokeThickness: 5,
                 wordWrap: { width: 350 } 
             }).setOrigin(0.5).setDepth(20);
             
@@ -113,6 +119,10 @@
                             if (child.val === child.correctVal) {
                                 score++;
                                 scoreText.setText('Score: ' + score);
+                                
+                                // INCREASE SPEED
+                                currentPipeSpeed += speedIncrement;
+                                
                                 generateMathProblem(); 
                             } else {
                                 gameOver.call(this, "Math Error!\nIncorrect answer.");
@@ -139,13 +149,15 @@
             player.setPosition(100, 300);
             player.setVelocity(0, 0);
             score = 0;
+            currentPipeSpeed = basePipeSpeed; // Reset speed on start
             scoreText.setText('Score: 0');
             
             generateMathProblem();
             spawnPipes(scene);
             
+            // Adjust spawn delay based on current speed
             spawnTimer = scene.time.addEvent({ 
-                delay: 2400, 
+                delay: 2800, 
                 callback: () => spawnPipes(scene), 
                 loop: true 
             });
@@ -158,23 +170,23 @@
             if (mode === 'mul') {
                 let a = Phaser.Math.Between(2, 10);
                 let b = Phaser.Math.Between(2, 5);
-                currentProblem.q = `${a} × ${b} = ?`;
+                currentProblem.q = `${a} × ${b}`;
                 currentProblem.a = a * b;
             } else if (mode === 'sub') {
                 let a = Phaser.Math.Between(10, 30);
-                let b = Phaser.Math.Between(1, a); // Ensures no negative results
-                currentProblem.q = `${a} - ${b} = ?`;
+                let b = Phaser.Math.Between(1, a);
+                currentProblem.q = `${a} - ${b}`;
                 currentProblem.a = a - b;
             } else if (mode === 'div') {
                 let b = Phaser.Math.Between(2, 5);
                 let answer = Phaser.Math.Between(1, 10);
-                let a = b * answer; // Guarantees a whole number result
-                currentProblem.q = `${a} ÷ ${b} = ?`;
+                let a = b * answer;
+                currentProblem.q = `${a} ÷ ${b}`;
                 currentProblem.a = answer;
             } else {
                 let a = Phaser.Math.Between(1, 20);
                 let b = Phaser.Math.Between(1, 20);
-                currentProblem.q = `${a} + ${b} = ?`;
+                currentProblem.q = `${a} + ${b}`;
                 currentProblem.a = a + b;
             }
 
@@ -189,7 +201,7 @@
 
         function spawnPipes(scene) {
             if (gameState !== 'PLAYING') return;
-            const gapSize = 190;
+            const gapSize = 200; // Slightly larger gap for easier viewing
             const x = 450;
             const midY = Phaser.Math.Between(220, 380);
             
@@ -200,15 +212,16 @@
             [pTop, pMid, pBot].forEach(p => { 
                 p.body.allowGravity = false; 
                 p.body.immovable = true; 
-                p.setVelocityX(pipeSpeed); 
+                p.setVelocityX(currentPipeSpeed); // Use dynamic speed
                 p.isSensor = false;
             });
 
             let topVal = currentProblem.correctGap === 'top' ? currentProblem.a : currentProblem.d;
             let botVal = currentProblem.correctGap === 'bottom' ? currentProblem.a : currentProblem.d;
 
-            let tTop = scene.add.text(x, midY - (gapSize/2), topVal, { fontSize: '32px', fill: '#000', fontWeight: 'bold' }).setOrigin(0.5).setDepth(15);
-            let tBot = scene.add.text(x, midY + (gapSize/2), botVal, { fontSize: '32px', fill: '#000', fontWeight: 'bold' }).setOrigin(0.5).setDepth(15);
+            // Enlarged answer numbers in gaps
+            let tTop = scene.add.text(x, midY - (gapSize/2), topVal, { fontSize: '48px', fill: '#000', fontWeight: 'bold' }).setOrigin(0.5).setDepth(15);
+            let tBot = scene.add.text(x, midY + (gapSize/2), botVal, { fontSize: '48px', fill: '#000', fontWeight: 'bold' }).setOrigin(0.5).setDepth(15);
 
             let sTop = pipes.create(x, midY - (gapSize/2), null);
             sTop.setVisible(false);
