@@ -41,15 +41,15 @@
         };
 
         const game = new Phaser.Game(config);
-        let player, pipes, score = 0, gameState = 'BOOT'; 
+        let player, pipes, score = 0, lives = 3, gameState = 'BOOT'; 
+        let isInvincible = false;
         let currentProblem = { q: '', a: 0, d: 0, correctGap: '' };
         
-        // Speed Variables
-        let basePipeSpeed = -160; // Slower start
+        let basePipeSpeed = -160;
         let currentPipeSpeed = -160;
-        let speedIncrement = -5;  // Speed up by 5 per point
+        let speedIncrement = -5; 
         
-        let spawnTimer, scoreText, questionText, menuText, highScoreText;
+        let spawnTimer, scoreText, livesText, questionText, menuText, highScoreText;
         let highScore = localStorage.getItem('mathGapHighScore') || 0;
 
         function preload() {
@@ -78,26 +78,34 @@
             player.visible = false;
             player.setDepth(10);
 
-            // Enlarged Question Text
-            questionText = this.add.text(200, 65, '', { 
-                fontSize: '42px', fill: '#fff', stroke: '#000', strokeThickness: 8,
-                wordWrap: { width: 380 }, align: 'center', fontWeight: 'bold'
-            }).setOrigin(0.5).setDepth(20);
+            // Bolder, Larger UI Text
+            const textStyle = { 
+                fontSize: '48px', 
+                fill: '#fff', 
+                stroke: '#000', 
+                strokeThickness: 10,
+                fontWeight: 'bold' 
+            };
 
-            scoreText = this.add.text(200, 120, 'Score: 0', { fontSize: '24px', fill: '#fff', fontWeight: 'bold' }).setOrigin(0.5).setDepth(20);
-            highScoreText = this.add.text(200, 150, `Best: ${highScore}`, { fontSize: '20px', fill: '#FFD700', fontWeight: 'bold' }).setOrigin(0.5).setDepth(20);
+            questionText = this.add.text(200, 70, '', textStyle).setOrigin(0.5).setDepth(20);
+            
+            scoreText = this.add.text(20, 20, 'Score: 0', { fontSize: '28px', fill: '#fff', stroke: '#000', strokeThickness: 4, fontWeight: 'bold' }).setDepth(20);
+            livesText = this.add.text(380, 20, 'Lives: 3', { fontSize: '28px', fill: '#ff4d4d', stroke: '#000', strokeThickness: 4, fontWeight: 'bold' }).setOrigin(1, 0).setDepth(20);
+            highScoreText = this.add.text(200, 130, `Best: ${highScore}`, { fontSize: '24px', fill: '#FFD700', stroke: '#000', strokeThickness: 4, fontWeight: 'bold' }).setOrigin(0.5).setDepth(20);
 
-            menuText = this.add.text(200, 300, '', { 
-                fontSize: '26px', fill: '#fff', align: 'center', stroke: '#000', strokeThickness: 5,
-                wordWrap: { width: 350 } 
+            menuText = this.add.text(200, 320, '', { 
+                fontSize: '32px', fill: '#fff', align: 'center', stroke: '#000', strokeThickness: 6,
+                wordWrap: { width: 350 }, fontWeight: 'bold'
             }).setOrigin(0.5).setDepth(20);
             
-            menuText.setText(`MATH GAP\n\nHigh Score: ${highScore}\n\nTap to Start`);
+            menuText.setText(`MATH GAP\n\nTap to Start`);
 
             this.input.on('pointerdown', () => handleInput(this));
             
-            this.physics.add.collider(player, pipes, (p, pipe) => {
-                if (!pipe.isSensor) gameOver.call(this, "Ouch! You hit a pillar.");
+            this.physics.add.overlap(player, pipes, (p, pipe) => {
+                if (!pipe.isSensor && !isInvincible) {
+                    takeDamage.call(this, "Ouch!");
+                }
             });
 
             gameState = 'MENU';
@@ -107,7 +115,9 @@
             if (gameState === 'PLAYING') {
                 player.angle = Phaser.Math.Clamp(player.body.velocity.y * 0.1, -20, 90);
                 
-                if (player.y > 600 || player.y < 0) gameOver.call(this, "You flew off the map!");
+                if (player.y > 600 || player.y < 0) {
+                    takeDamage.call(this, "Stay on Screen!");
+                }
                 
                 pipes.children.iterate(child => {
                     if (!child) return;
@@ -120,17 +130,45 @@
                                 score++;
                                 scoreText.setText('Score: ' + score);
                                 
-                                // INCREASE SPEED
+                                // Grant extra life every 50 points
+                                if (score % 50 === 0) {
+                                    lives++;
+                                    livesText.setText('Lives: ' + lives);
+                                }
+
                                 currentPipeSpeed += speedIncrement;
-                                
                                 generateMathProblem(); 
                             } else {
-                                gameOver.call(this, "Math Error!\nIncorrect answer.");
+                                takeDamage.call(this, "Wrong Answer!");
                             }
                         }
                     }
 
                     if (child.x < -100) child.destroy();
+                });
+            }
+        }
+
+        function takeDamage(reason) {
+            if (isInvincible || gameState !== 'PLAYING') return;
+            
+            lives--;
+            livesText.setText('Lives: ' + lives);
+            
+            if (lives <= 0) {
+                gameOver.call(this, reason);
+            } else {
+                // Temporary Invincibility
+                isInvincible = true;
+                player.setAlpha(0.5);
+                
+                // Clear existing pipes to give the player a break
+                pipes.clear(true, true);
+                
+                this.time.delayedCall(1500, () => {
+                    isInvincible = false;
+                    player.setAlpha(1);
+                    generateMathProblem();
                 });
             }
         }
@@ -149,13 +187,16 @@
             player.setPosition(100, 300);
             player.setVelocity(0, 0);
             score = 0;
-            currentPipeSpeed = basePipeSpeed; // Reset speed on start
+            lives = 3;
+            isInvincible = false;
+            player.setAlpha(1);
+            currentPipeSpeed = basePipeSpeed;
             scoreText.setText('Score: 0');
+            livesText.setText('Lives: 3');
             
             generateMathProblem();
             spawnPipes(scene);
             
-            // Adjust spawn delay based on current speed
             spawnTimer = scene.time.addEvent({ 
                 delay: 2800, 
                 callback: () => spawnPipes(scene), 
@@ -201,7 +242,7 @@
 
         function spawnPipes(scene) {
             if (gameState !== 'PLAYING') return;
-            const gapSize = 200; // Slightly larger gap for easier viewing
+            const gapSize = 200; 
             const x = 450;
             const midY = Phaser.Math.Between(220, 380);
             
@@ -212,39 +253,29 @@
             [pTop, pMid, pBot].forEach(p => { 
                 p.body.allowGravity = false; 
                 p.body.immovable = true; 
-                p.setVelocityX(currentPipeSpeed); // Use dynamic speed
+                p.setVelocityX(currentPipeSpeed);
                 p.isSensor = false;
             });
 
             let topVal = currentProblem.correctGap === 'top' ? currentProblem.a : currentProblem.d;
             let botVal = currentProblem.correctGap === 'bottom' ? currentProblem.a : currentProblem.d;
 
-            // Enlarged answer numbers in gaps
-            let tTop = scene.add.text(x, midY - (gapSize/2), topVal, { fontSize: '48px', fill: '#000', fontWeight: 'bold' }).setOrigin(0.5).setDepth(15);
-            let tBot = scene.add.text(x, midY + (gapSize/2), botVal, { fontSize: '48px', fill: '#000', fontWeight: 'bold' }).setOrigin(0.5).setDepth(15);
+            // Black and White Answer Text
+            let tTop = scene.add.text(x, midY - (gapSize/2), topVal, { fontSize: '54px', fill: '#fff', stroke: '#000', strokeThickness: 8, fontWeight: 'bold' }).setOrigin(0.5).setDepth(15);
+            let tBot = scene.add.text(x, midY + (gapSize/2), botVal, { fontSize: '54px', fill: '#fff', stroke: '#000', strokeThickness: 8, fontWeight: 'bold' }).setOrigin(0.5).setDepth(15);
 
             let sTop = pipes.create(x, midY - (gapSize/2), null);
-            sTop.setVisible(false);
-            sTop.body.setEnable(false);
-            sTop.isSensor = true;
-            sTop.val = topVal;
-            sTop.correctVal = currentProblem.a;
-            sTop.passed = false;
+            sTop.setVisible(false); sTop.body.setEnable(false);
+            sTop.isSensor = true; sTop.val = topVal; sTop.correctVal = currentProblem.a; sTop.passed = false;
 
             let sBot = pipes.create(x, midY + (gapSize/2), null);
-            sBot.setVisible(false);
-            sBot.body.setEnable(false);
-            sBot.isSensor = true;
-            sBot.val = botVal;
-            sBot.correctVal = currentProblem.a;
-            sBot.passed = false;
+            sBot.setVisible(false); sBot.body.setEnable(false);
+            sBot.isSensor = true; sBot.val = botVal; sBot.correctVal = currentProblem.a; sBot.passed = false;
 
             scene.events.on('update', () => {
                 if (tTop.active) {
-                    tTop.x = pTop.x;
-                    tBot.x = pTop.x;
-                    sTop.x = pTop.x;
-                    sBot.x = pTop.x;
+                    tTop.x = pTop.x; tBot.x = pTop.x;
+                    sTop.x = pTop.x; sBot.x = pTop.x;
                 }
             });
         }
@@ -267,7 +298,6 @@
             
             let message = `${reason}\n\nFinal Score: ${score}\n`;
             if (newRecord) message += "🏆 NEW HIGH SCORE! 🏆\n";
-            else message += `High Score: ${highScore}\n`;
             message += "\nTap to Restart";
 
             menuText.setText(message);
