@@ -80,7 +80,7 @@
             player.setDepth(10);
 
             let uiBg = this.add.graphics();
-            uiBg.fillStyle(0x000000, 0.4);
+            uiBg.fillStyle(0x000000, 0.6); // Slightly darker bar
             uiBg.fillRect(0, 0, 400, 40);
             uiBg.setDepth(20);
 
@@ -88,12 +88,13 @@
             scoreText = this.add.text(20, 10, 'Score: 0', uiStyle).setDepth(21);
             highScoreText = this.add.text(200, 10, `Best: ${highScore}`, uiStyle).setOrigin(0.5, 0).setDepth(21);
             
-            // FIXED: Changed fill to #ff3333 (brighter red) and added a black stroke for visibility
+            // LIVES COLOR FIX: Using bright yellow with a black stroke for maximum visibility
             livesText = this.add.text(380, 10, 'Lives: 3', { 
-                ...uiStyle, 
-                fill: '#ff3333',
-                stroke: '#000',
-                strokeThickness: 3 
+                fontSize: '18px', 
+                fill: '#ffff00', 
+                fontWeight: 'bold',
+                stroke: '#000000',
+                strokeThickness: 4
             }).setOrigin(1, 0).setDepth(21);
 
             questionText = this.add.text(200, 100, '', { 
@@ -162,6 +163,7 @@
                 isInvincible = true;
                 player.setAlpha(0.5);
                 
+                // Clear numbers immediately on hit
                 answerTexts.clear(true, true);
                 pipes.clear(true, true);
                 
@@ -268,14 +270,16 @@
 
         function gameOver(reason) {
             if (gameState === 'GAMEOVER') return;
+            
+            // GAP NUMBERS FIX: Clean up text objects immediately
+            answerTexts.clear(true, true);
+            pipes.clear(true, true);
+
             gameState = 'GAMEOVER';
             if (spawnTimer) spawnTimer.remove();
             this.physics.pause();
             player.setTint(0xff0000);
             
-            // FIXED: Clear the floating gap numbers when the game ends
-            answerTexts.clear(true, true);
-
             if (score > highScore) {
                 highScore = score;
                 localStorage.setItem('mathGapHighScore', highScore);
