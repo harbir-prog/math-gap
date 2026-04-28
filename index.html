@@ -70,19 +70,15 @@
         function create() {
             this.cameras.main.setBackgroundColor('#70c5ce');
             
-            // Groups
             pipes = this.physics.add.group();
-            answerTexts = this.add.group(); // Group to manage answer text lifecycle
+            answerTexts = this.add.group(); 
             
-            // Player
             player = this.physics.add.sprite(100, 300, 'bird');
             player.setCircle(15);
             player.body.allowGravity = false;
             player.visible = false;
             player.setDepth(10);
 
-            // --- UI SECTION ---
-            // Top Bar Background
             let uiBg = this.add.graphics();
             uiBg.fillStyle(0x000000, 0.4);
             uiBg.fillRect(0, 0, 400, 40);
@@ -91,14 +87,19 @@
             const uiStyle = { fontSize: '18px', fill: '#fff', fontWeight: 'bold' };
             scoreText = this.add.text(20, 10, 'Score: 0', uiStyle).setDepth(21);
             highScoreText = this.add.text(200, 10, `Best: ${highScore}`, uiStyle).setOrigin(0.5, 0).setDepth(21);
-            livesText = this.add.text(380, 10, 'Lives: 3', { ...uiStyle, fill: '#ff8888' }).setOrigin(1, 0).setDepth(21);
+            
+            // FIXED: Changed fill to #ff3333 (brighter red) and added a black stroke for visibility
+            livesText = this.add.text(380, 10, 'Lives: 3', { 
+                ...uiStyle, 
+                fill: '#ff3333',
+                stroke: '#000',
+                strokeThickness: 3 
+            }).setOrigin(1, 0).setDepth(21);
 
-            // Large Math Question
             questionText = this.add.text(200, 100, '', { 
                 fontSize: '64px', fill: '#fff', stroke: '#000', strokeThickness: 10, fontWeight: 'bold' 
             }).setOrigin(0.5).setDepth(20);
 
-            // Menus
             menuText = this.add.text(200, 320, '', { 
                 fontSize: '28px', fill: '#fff', align: 'center', stroke: '#000', strokeThickness: 5,
                 wordWrap: { width: 350 }, fontWeight: 'bold'
@@ -106,7 +107,6 @@
             
             menuText.setText(`MATH GAP\n\nTap to Start`);
 
-            // Inputs & Collisions
             this.input.on('pointerdown', () => handleInput(this));
             this.physics.add.overlap(player, pipes, (p, pipe) => {
                 if (!pipe.isSensor && !isInvincible) takeDamage.call(this, "Ouch!");
@@ -121,15 +121,13 @@
                 
                 if (player.y > 600 || player.y < 0) takeDamage.call(this, "Stay on Screen!");
                 
-                // Clean up pipes and their associated text
                 pipes.children.iterate(child => {
                     if (child && child.x < -100) {
-                        if (child.relatedText) child.relatedText.destroy(); // Fix: Destroy text with pipe
+                        if (child.relatedText) child.relatedText.destroy();
                         child.destroy();
                     }
                 });
 
-                // Sensor Logic
                 pipes.children.iterate(child => {
                     if (child && child.isSensor && !child.passed && player.x > child.x) {
                         child.passed = true;
@@ -164,7 +162,6 @@
                 isInvincible = true;
                 player.setAlpha(0.5);
                 
-                // Clear pipes AND their texts
                 answerTexts.clear(true, true);
                 pipes.clear(true, true);
                 
@@ -246,13 +243,12 @@
             let topVal = currentProblem.correctGap === 'top' ? currentProblem.a : currentProblem.d;
             let botVal = currentProblem.correctGap === 'bottom' ? currentProblem.a : currentProblem.d;
 
-            // Create Text and Link it to a pipe for easy cleanup
             let tTop = scene.add.text(x, midY - (gapSize/2), topVal, { fontSize: '54px', fill: '#fff', stroke: '#000', strokeThickness: 8, fontWeight: 'bold' }).setOrigin(0.5).setDepth(15);
             let tBot = scene.add.text(x, midY + (gapSize/2), botVal, { fontSize: '54px', fill: '#fff', stroke: '#000', strokeThickness: 8, fontWeight: 'bold' }).setOrigin(0.5).setDepth(15);
             
             answerTexts.add(tTop); answerTexts.add(tBot);
-            pTop.relatedText = tTop; // Link first text to top pipe
-            pBot.relatedText = tBot; // Link second text to bottom pipe
+            pTop.relatedText = tTop; 
+            pBot.relatedText = tBot; 
 
             let sTop = pipes.create(x, midY - (gapSize/2), null);
             sTop.setVisible(false); sTop.body.setEnable(false);
@@ -277,6 +273,9 @@
             this.physics.pause();
             player.setTint(0xff0000);
             
+            // FIXED: Clear the floating gap numbers when the game ends
+            answerTexts.clear(true, true);
+
             if (score > highScore) {
                 highScore = score;
                 localStorage.setItem('mathGapHighScore', highScore);
