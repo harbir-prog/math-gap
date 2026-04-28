@@ -6,8 +6,23 @@
     <title>Math Gap Pro - GAM Lab</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
     <style>
-        body { margin: 0; background-color: #222; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Arial', sans-serif; overflow: hidden; }
-        #game-container { box-shadow: 0 0 30px rgba(0,0,0,0.8); border-radius: 8px; overflow: hidden; border: 2px solid #444; }
+        body { 
+            margin: 0; 
+            background-color: #222; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            font-family: 'Arial', sans-serif; 
+            overflow: hidden; 
+        }
+        #game-container { 
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -15,10 +30,17 @@
     <script>
         const config = {
             type: Phaser.AUTO,
-            width: 400,
-            height: 600,
             parent: 'game-container',
-            physics: { default: 'arcade', arcade: { gravity: { y: 1200 }, debug: false } },
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH,
+                width: 400,
+                height: 600
+            },
+            physics: { 
+                default: 'arcade', 
+                arcade: { gravity: { y: 1200 }, debug: false } 
+            },
             scene: { preload: preload, create: create, update: update }
         };
 
@@ -29,7 +51,7 @@
         let basePipeSpeed = -160, currentPipeSpeed = -160, speedIncrement = -5; 
         let spawnTimer, scoreText, livesText, comboText, questionText, menuText, highScoreText;
         let highScore = localStorage.getItem('mathGapHighScore') || 0;
-        let nextLifeMilestone = 100; // Track the next point goal for an extra life
+        let nextLifeMilestone = 100;
 
         function preload() {
             let birdGraphics = this.make.graphics({ x: 0, y: 0, add: false });
@@ -106,17 +128,16 @@
             if (combo >= 3) {
                 comboText.setText(`${combo}X COMBO!`);
                 player.setTint(0x00ffff);
-                this.cameras.main.flash(100, 0, 255, 255, 0.2);
+                // REMOVED FLASH FROM COMBO AS REQUESTED
             }
 
-            // EXTRA LIFE LOGIC: Check if current score passed the 100-point milestone
             if (score >= nextLifeMilestone) {
                 lives++;
                 livesText.setText('Lives: ' + lives);
-                nextLifeMilestone += 100; // Set next goal (200, 300, etc)
+                nextLifeMilestone += 100;
                 
-                // Visual feedback for extra life
-                this.cameras.main.flash(500, 255, 255, 0, 0.3); 
+                // FLASH ONLY WHEN LIFE IS ADDED
+                this.cameras.main.flash(500, 255, 255, 0, 0.4); 
             }
 
             currentPipeSpeed += speedIncrement;
@@ -161,7 +182,7 @@
             player.body.allowGravity = true;
             player.setPosition(100, 300);
             score = 0; lives = 3; combo = 0;
-            nextLifeMilestone = 100; // Reset milestone
+            nextLifeMilestone = 100;
             isInvincible = false;
             currentPipeSpeed = basePipeSpeed;
             scoreText.setText('Score: 0');
