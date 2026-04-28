@@ -29,6 +29,7 @@
         let basePipeSpeed = -160, currentPipeSpeed = -160, speedIncrement = -5; 
         let spawnTimer, scoreText, livesText, comboText, questionText, menuText, highScoreText;
         let highScore = localStorage.getItem('mathGapHighScore') || 0;
+        let nextLifeMilestone = 100; // Track the next point goal for an extra life
 
         function preload() {
             let birdGraphics = this.make.graphics({ x: 0, y: 0, add: false });
@@ -61,9 +62,7 @@
             highScoreText = this.add.text(200, 10, `Best: ${highScore}`, uiStyle).setOrigin(0.5, 0).setDepth(21);
             livesText = this.add.text(380, 10, 'Lives: 3', { ...uiStyle, fill: '#ffff00', stroke: '#000', strokeThickness: 4 }).setOrigin(1, 0).setDepth(21);
 
-            // COMBO TEXT
             comboText = this.add.text(200, 160, '', { fontSize: '32px', fill: '#ff00ff', stroke: '#fff', strokeThickness: 4, fontWeight: 'bold' }).setOrigin(0.5).setDepth(21);
-
             questionText = this.add.text(200, 100, '', { fontSize: '64px', fill: '#fff', stroke: '#000', strokeThickness: 10, fontWeight: 'bold' }).setOrigin(0.5).setDepth(20);
             menuText = this.add.text(200, 320, 'MATH GAP PRO\n\nTap to Start', { fontSize: '28px', fill: '#fff', align: 'center', stroke: '#000', strokeThickness: 5, wordWrap: { width: 350 }, fontWeight: 'bold' }).setOrigin(0.5).setDepth(25);
 
@@ -101,19 +100,25 @@
 
         function handleCorrectAnswer() {
             combo++;
-            score += (1 * combo); // Earn more points based on combo!
+            score += (1 * combo); 
             scoreText.setText('Score: ' + score);
             
             if (combo >= 3) {
                 comboText.setText(`${combo}X COMBO!`);
-                player.setTint(0x00ffff); // Glow Cyan on combo
+                player.setTint(0x00ffff);
                 this.cameras.main.flash(100, 0, 255, 255, 0.2);
             }
 
-            if (score % 50 === 0) {
+            // EXTRA LIFE LOGIC: Check if current score passed the 100-point milestone
+            if (score >= nextLifeMilestone) {
                 lives++;
                 livesText.setText('Lives: ' + lives);
+                nextLifeMilestone += 100; // Set next goal (200, 300, etc)
+                
+                // Visual feedback for extra life
+                this.cameras.main.flash(500, 255, 255, 0, 0.3); 
             }
+
             currentPipeSpeed += speedIncrement;
             generateMathProblem(); 
         }
@@ -122,11 +127,11 @@
             if (isInvincible || gameState !== 'PLAYING') return;
             
             lives--;
-            combo = 0; // Reset combo on hit
+            combo = 0; 
             comboText.setText('');
             player.clearTint();
             livesText.setText('Lives: ' + lives);
-            this.cameras.main.shake(200, 0.02); // Add Screen Shake
+            this.cameras.main.shake(200, 0.02);
             
             if (lives <= 0) {
                 gameOver.call(this, reason);
@@ -156,6 +161,7 @@
             player.body.allowGravity = true;
             player.setPosition(100, 300);
             score = 0; lives = 3; combo = 0;
+            nextLifeMilestone = 100; // Reset milestone
             isInvincible = false;
             currentPipeSpeed = basePipeSpeed;
             scoreText.setText('Score: 0');
