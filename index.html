@@ -6,19 +6,24 @@
     <title>Math Gap Pro - GAM Lab</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
     <style>
+        /* Ensures the body takes up the full screen and centers content */
         body { 
             margin: 0; 
-            background-color: #222; 
+            background-color: #1a1a1a; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            min-height: 100vh; 
+            height: 100vh; 
+            width: 100vw;
             font-family: 'Arial', sans-serif; 
             overflow: hidden; 
         }
+
+        /* The container for the game canvas */
         #game-container { 
-            width: 100vw;
-            height: 100vh;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            border-radius: 4px;
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -32,6 +37,7 @@
             type: Phaser.AUTO,
             parent: 'game-container',
             scale: {
+                // FIT mode maintains aspect ratio while filling the available space
                 mode: Phaser.Scale.FIT,
                 autoCenter: Phaser.Scale.CENTER_BOTH,
                 width: 400,
@@ -128,15 +134,13 @@
             if (combo >= 3) {
                 comboText.setText(`${combo}X COMBO!`);
                 player.setTint(0x00ffff);
-                // REMOVED FLASH FROM COMBO AS REQUESTED
             }
 
             if (score >= nextLifeMilestone) {
                 lives++;
                 livesText.setText('Lives: ' + lives);
                 nextLifeMilestone += 100;
-                
-                // FLASH ONLY WHEN LIFE IS ADDED
+                // Flash only on life gain
                 this.cameras.main.flash(500, 255, 255, 0, 0.4); 
             }
 
