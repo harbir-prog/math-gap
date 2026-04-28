@@ -6,32 +6,31 @@
     <title>Math Gap Pro - GAM Lab</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
     <style>
-        /* Force the background and lock the screen */
+        /* Force the html and body to take up the full screen height */
         html, body {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 100%;
+            height: 100vh;
+            width: 100vw;
             background-color: #1a1a1a;
             overflow: hidden;
+            
+            /* Center everything inside the body */
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        /* Absolute Centering: This forces the container to the mathematical center of the browser window */
         #game-container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            
-            /* Ensure the container behaves as a block for the canvas */
+            /* Ensure the container is visible and centered */
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
         canvas {
-            box-shadow: 0 0 60px rgba(0,0,0,0.9);
-            border: 1px solid #333;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            border-radius: 4px;
         }
     </style>
 </head>
@@ -138,6 +137,7 @@
             if (combo >= 3) {
                 comboText.setText(`${combo}X COMBO!`);
                 player.setTint(0x00ffff);
+                // Camera flash removed from combo per instructions
             }
 
             if (score >= nextLifeMilestone) {
