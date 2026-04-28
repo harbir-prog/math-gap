@@ -2,37 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Math Gap Pro - GAM Lab</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
     <style>
-        /* Force the background and prevent scrolling */
+        /* Force the background and lock the screen */
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
-            background-color: #1a1a1a !important; /* Matches your screenshot background */
+            background-color: #1a1a1a;
             overflow: hidden;
         }
 
-        /* Fixed centering: This forces the container to the absolute center of the viewport */
+        /* Absolute Centering: This forces the container to the mathematical center of the browser window */
         #game-container {
-            position: fixed;
+            position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            
+            /* Ensure the container behaves as a block for the canvas */
             display: flex;
             justify-content: center;
             align-items: center;
-            /* Ensure the container doesn't exceed screen bounds */
-            width: 100vw;
-            height: 100vh;
         }
 
         canvas {
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
-            display: block;
+            box-shadow: 0 0 60px rgba(0,0,0,0.9);
+            border: 1px solid #333;
         }
     </style>
 </head>
@@ -145,7 +144,8 @@
                 lives++;
                 livesText.setText('Lives: ' + lives);
                 nextLifeMilestone += 100;
-                // FLASH ONLY ON LIFE ADDED
+                
+                // FLASH ONLY WHEN LIFE IS ADDED
                 this.cameras.main.flash(500, 255, 255, 0, 0.4); 
             }
 
